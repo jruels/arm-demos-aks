@@ -1,0 +1,93 @@
+# AKS deployment pipeline
+
+trigger:
+  branches:
+    include:
+    - master
+
+variables:
+  aksTest: 'arm-cluster-jrs'
+  aksTestRG: 'arm-demos'
+  dnsPrefix: 'arm-cluster-jrs'
+  linuxAdminUsername: 'azureuser'
+  sshRSAPublicKey: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDhg6VPxLIXAkMZOzZ4npBb5i6XSvbfEwGxZ4wMNgCyT0CgMFXCfQy9D2ZhnWzPcmWNdeGQB5jervl97dcRVGYnveIGJ1cMr8qNZ+agL1/d2+/X8XMiFLq3jP1ev/glG8lZxDxn31peWmk1dj6jCFxnA7tcfwSYt8MTH2pMAut0ac6cEZ7zoovwyZwMCgTJPLX5d/cCHHObWmHU1RGZfhQhkcpwJ86M0JGPbAX07FGAlL0IM+MyNWAS8SZL3iyOoGPRovlLY4NsxrKrWWpqjdN4qvTwNzax8EQTB1KDYPvmR35/44753Lpyll5mSM0cm8vmSTblHM0tBINg/gScaZJx'
+  servicePrincipalClientId: 'd53a3dad-e790-4bfc-bbef-ef04b3c72622'
+  servicePrincipalClientSecret: 'q-fEtFppQLpucvHsbg~-pOclpQf2n98.U7'
+
+stages:
+- stage: DeployAKSTest
+  jobs:
+  - job: 'DeployToTest'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps: 
+    # DEPLOY AKS IN TEST   
+    - task: AzureResourceManagerTemplateDeployment@3
+      inputs:
+        deploymentScope: 'Resource Group'
+        azureResourceManagerConnection: 'arm-demos-connection'
+        subscriptionId: 'b0117c94-47af-4036-95ef-d322f0d2824e'
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: '$(aksTestRG)'
+        location: 'West US'
+        templateLocation: 'Linked artifact'
+        csmFile: 'azuredeploy.json'
+        csmParametersFile: 'azuredeploy.parameters.json'
+        overrideParameters: '-dnsPrefix $(dnsPrefix) -linuxAdminUsername $(linuxAdminUsername) -sshRSAPublicKey $(sshRSAPublicKey) -servicePrincipalClientId $(servicePrincipalClientId) -servicePrincipalClientSecret $(servicePrincipalClientSecret) -clusterName $(aksTest)'
+        deploymentMode: 'Incremental'
+        deploymentName: 'ARMTestAKS'
+
+    # DEPLOY IP ADDRESS IN BACKING RESOURCE GROUP
+    - task: AzureResourceManagerTemplateDeployment@3
+      inputs:
+        deploymentScope: 'Resource Group'
+        azureResourceManagerConnection: 'arm-demos-connection'
+        subscriptionId: 'b0117c94-47af-4036-95ef-d322f0d2824e'
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: 'MC_rg-clu-test_clu-test_westeurope'
+        location: 'West Europe'
+        templateLocation: 'Linked artifact'
+        csmFile: 'ip/deploy.json'
+        overrideParameters: '-ipName $(aksTestIP)'
+        deploymentMode: 'Incremental'
+        deploymentName: 'aksTestIp'
+        deploymentOutputs: 'armoutputs'
+    - task: Bash@3
+      inputs:
+        targetType: 'inline'
+        script: |
+          echo "##vso[task.setvariable variable=test-ip;]$(echo '$(armoutputs)' | jq .ipaddress.value -r)"
+
+    # INSTALL KUBECTL
+    - task: KubectlInstaller@0
+      inputs:
+        kubectlVersion: '1.16.0'
+    # INSTALL HELM
+    - task: HelmInstaller@1
+      inputs:
+        helmVersionToInstall: '2.16.10'
+
+    # GET CREDS TO K8S CLUSTER WITH ADMIN (required for AAD integrated cluster)
+    - task: AzureCLI@1
+      inputs:
+        azureSubscription: 'Microsoft Azure Sponsorship(b0117c94-47af-4036-95ef-d322f0d2824e)'
+        scriptLocation: 'inlineScript'
+        inlineScript: 'az aks get-credentials -g $(aksTestRG) -n $(aksTest)'
+
+    # INSTALL TILLER
+    - task: Bash@3
+      inputs:
+        filePath: 'tiller/tillerconfig.sh'
+        workingDirectory: 'tiller/'
+
+   # DEPLOY EXTERNAL INGRESS
+    - task: HelmDeploy@0
+      inputs:
+        connectionType: 'None'
+        namespace: 'kube-system'
+        command: 'upgrade'
+        chartType: 'FilePath'
+        chartPath: 'traefik-ext/.'
+        releaseName: 'traefik-ext'
+        overrideValues: 'loadBalancerIP=$(test-ip)'
+        valueFile: 'traefik-ext/values.yaml' 
