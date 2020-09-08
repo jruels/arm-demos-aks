@@ -68,7 +68,7 @@ stages:
         helmVersionToInstall: '2.16.10'
 
     # GET CREDS TO K8S CLUSTER WITH ADMIN (required for AAD integrated cluster)
-    - task: AzureCLI@1
+    - task: AzureCLI@2
       inputs:
         azureSubscription: 'Microsoft Azure Sponsorship(b0117c94-47af-4036-95ef-d322f0d2824e)'
         scriptLocation: 'inlineScript'
