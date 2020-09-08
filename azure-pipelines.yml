@@ -72,7 +72,7 @@ stages:
       inputs:
         azureSubscription: 'Microsoft Azure Sponsorship(b0117c94-47af-4036-95ef-d322f0d2824e)'
         scriptLocation: 'inlineScript'
-        inlineScript: 'az aks get-credentials -g $(aksTestRG) -n $(aksTest)'
+        inlineScript: 'az aks get-credentials -g $(aksTestRG) -n $(aksTest) -admin'
 
     # INSTALL TILLER
     - task: Bash@3
