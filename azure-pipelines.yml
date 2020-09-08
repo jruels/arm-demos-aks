@@ -70,9 +70,11 @@ stages:
     # GET CREDS TO K8S CLUSTER WITH ADMIN (required for AAD integrated cluster)
     - task: AzureCLI@2
       inputs:
-        azureSubscription: 'arm-demos-connection(b0117c94-47af-4036-95ef-d322f0d2824e)'
+        azureSubscription: 'arm-demos-connection'
+        scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: 'az aks get-credentials -g $(aksTestRG) -n $(aksTest) -admin'
+
 
     # INSTALL TILLER
     - task: Bash@3
