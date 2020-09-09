@@ -13,6 +13,7 @@
         },
         "sshRSAPublicKey": {
             "value": "GEN-SSH-PUB-KEY"
+            "default": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDhg6VPxLIXAkMZOzZ4npBb5i6XSvbfEwGxZ4wMNgCyT0CgMFXCfQy9D2ZhnWzPcmWNdeGQB5jervl97dcRVGYnveIGJ1cMr8qNZ+agL1/d2+/X8XMiFLq3jP1ev/glG8lZxDxn31peWmk1dj6jCFxnA7tcfwSYt8MTH2pMAut0ac6cEZ7zoovwyZwMCgTJPLX5d/cCHHObWmHU1RGZfhQhkcpwJ86M0JGPbAX07FGAlL0IM+MyNWAS8SZL3iyOoGPRovlLY4NsxrKrWWpqjdN4qvTwNzax8EQTB1KDYPvmR35/44753Lpyll5mSM0cm8vmSTblHM0tBINg/gScaZJx"
         },
         "servicePrincipalClientId": {
             "value": "GEN-AZUREAD-AKS-APPID"
