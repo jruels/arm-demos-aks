@@ -32,7 +32,7 @@ stages:
         location: 'West US'
         templateLocation: 'Linked artifact'
         csmFile: 'azuredeploy.json'
-        csmParametersFile: 'azuredeploy.parameters.json'
+        #csmParametersFile: 'azuredeploy.parameters.json'
         overrideParameters: '-dnsPrefix $(dnsPrefix) -linuxAdminUsername $(linuxAdminUsername) -sshRSAPublicKey $(sshRSAPublicKey) -servicePrincipalClientId $(servicePrincipalClientId) -servicePrincipalClientSecret $(servicePrincipalClientSecret) -clusterName $(aksTest)'
         deploymentMode: 'Incremental'
         deploymentName: 'ARMTestAKS'
